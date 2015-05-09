@@ -1,20 +1,15 @@
 log   = (require 'debug') 'doom:jobFinder'
 Mocha = require 'mocha'
 glob  = require 'glob'
+path  = require 'path'
+testFullTitle = require './testFullTitle'
 
-fullTitle(test)=
-  path = []
-  while(test.parent != nil)
-    path.unshift(test.title)
-    test := test.parent
-
-  path.join '.'
 
 module.exports(testsPath)=
-  log "Get tests in path #(testsPath)"
-  files = glob!("#(testsPath)/**/*Spec.js", ^)
-
   mocha = new(Mocha({}))
+  log "Get tests in path #(testsPath)"
+  files = glob!("#(testsPath)/**/*.js", ^)
+
   for each @(file) in (files)
     log "Add file #(file)"
     mocha.addFile(file)
@@ -23,6 +18,10 @@ module.exports(testsPath)=
 
   tests = []
   mocha.suite.eachTest @(test)
-    tests.push(fullTitle(test))
+    log "each test #(test)"
+    tests.push {
+      src  = path.relative(testsPath, test.file)
+      name = testFullTitle(test)
+    }
 
   tests

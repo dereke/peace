@@ -1,13 +1,82 @@
-log     = (require 'debug') 'doom:server'
-express = require 'express'
-jobFinder = require './jobFinder'
+log        = (require 'debug') 'doom:server'
+express    = require 'express'
+bodyParser = require 'body-parser'
+compression = require 'compression'
+jobFinder  = require './jobFinder'
 
 
 module.exports(testsFolder)=
+  log("Initialising server with folder #(testsFolder)")
+  results = {}
+  jobs    = nil
+  availableJobs = []
+
   app = express()
+  app.use(compression())
 
-  app.get '/jobs' @(req, res)
-    jobs = jobFinder!(testsFolder)
-    res.send(jobs)
+  app.get '/init' @(req, res)
+    log 'Init received'
+    if (!jobs)
+      jobs          := jobFinder!(testsFolder)
 
+    availableJobs := jobs.slice(0)
 
+    log 'Init complete'
+    log "#(availableJobs.length) jobs available"
+    res.send('done')
+
+  app.get '/job' @(req, res)
+    job = availableJobs.shift()
+    if (job)
+      res.send(job)
+    else
+      res.status(200).end()
+
+  app.get '/agent' @(req, res)
+    res.send "
+      <html>
+      <head>
+        <script defer src='/agent.js'></script>
+      </head>
+      <body></body>
+      </html>
+    "
+
+  app.get '/agent.js' @(req, res)
+    res.sendFile("#(process.cwd())/dist/agent.js")
+
+  app.get '/results/:name' @(req, res)
+    log "Results requested for #(req.params.name)"
+    res.send(results.(req.params.name))
+
+  app.get '/results' @(req, res)
+    res.send(results)
+
+  app.put ('/result', bodyParser.json()) @(req, res)
+    log("Results received for #(req.body.name), passed: #(req.body.passed)")
+    results.(req.body.name) = {
+      passed = req.body.passed
+    }
+    res.status(200).end()
+
+  app.get '/runner' @(req, res)
+    src = decodeURIComponent(req.query.src)
+    res.send "<html>
+                <body>
+                  <div id='mocha'></div>
+                  <script src='/runner/mocha.js'></script>
+                  <script src='/runner/mocha-reporter.js'></script>
+                  <script>mocha.setup({ui: 'bdd', reporter: Remote})</script>
+                  <script src='/runner/test?src=#(src)'></script>
+                  <script>mocha.run();</script>
+                </body>
+              </html>"
+
+  app.get '/runner/mocha.js' @(req, res)
+    res.sendFile("#(process.cwd())/node_modules/mocha/mocha.js")
+
+  app.get '/runner/mocha-reporter.js' @(req, res)
+    res.sendFile("#(process.cwd())/dist/mocha-reporter.js")
+
+  app.get '/runner/test' @(req, res)
+    res.sendFile("#(testsFolder)/#(decodeURIComponent(req.query.src))")

@@ -32,8 +32,8 @@ describe 'jobFinder'
       results = jobFinder!(testFolder)
       expect(results.length).to.equal(4)
       expect(results).to.containSubset [
-        'one.first'
-        'one.second'
-        'two.third'
-        'two.fourth'
+        { name = 'one.first',  src = 'test/oneSpec.js' }
+        { name = 'one.second', src = 'test/oneSpec.js' }
+        { name = 'two.third',  src = 'test/twoSpec.js' }
+        { name = 'two.fourth', src = 'test/twoSpec.js' }
       ]

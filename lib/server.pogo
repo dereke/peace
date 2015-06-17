@@ -2,8 +2,10 @@ log        = (require 'debug') 'doom:server'
 express    = require 'express'
 bodyParser = require 'body-parser'
 compression = require 'compression'
+path       = require 'path'
 jobFinder  = require './jobFinder'
 
+distPath = path.resolve(__dirname, '../dist')
 
 module.exports(testsFolder)=
   log("Initialising server with folder #(testsFolder)")
@@ -43,7 +45,7 @@ module.exports(testsFolder)=
     "
 
   app.get '/agent.js' @(req, res)
-    res.sendFile("#(process.cwd())/dist/agent.js")
+    res.sendFile("#(distPath)/agent.js")
 
   app.get '/results/:name' @(req, res)
     log "Results requested for #(req.params.name)"
@@ -73,10 +75,10 @@ module.exports(testsFolder)=
               </html>"
 
   app.get '/runner/mocha.js' @(req, res)
-    res.sendFile("#(process.cwd())/node_modules/mocha/mocha.js")
+    res.sendFile("#(path.resolve(__dirname, '../'))/node_modules/mocha/mocha.js")
 
   app.get '/runner/mocha-reporter.js' @(req, res)
-    res.sendFile("#(process.cwd())/dist/mocha-reporter.js")
+    res.sendFile("#(distPath)/mocha-reporter.js")
 
   app.get '/runner/test' @(req, res)
     res.sendFile("#(testsFolder)/#(decodeURIComponent(req.query.src))")

@@ -81,4 +81,16 @@ module.exports(testsFolder)=
     res.sendFile("#(distPath)/mocha-reporter.js")
 
   app.get '/runner/test' @(req, res)
-    res.sendFile("#(testsFolder)/#(decodeURIComponent(req.query.src))")
+    browserify = require 'browserify'
+    b = browserify()
+    b.add("#(testsFolder)/#(decodeURIComponent(req.query.src))")
+    b.bundle().pipe(res)
+
+  app.get '/runner/deps' @(req, res)
+    f = "#(testsFolder)/#(decodeURIComponent(req.query.src))"
+    mdeps = require 'module-deps'
+    JSONStream = require 'JSONStream'
+    md = mdeps()
+    md.pipe(JSONStream.stringify()).pipe(res)
+    md.write(f)
+    md.end()

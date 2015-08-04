@@ -94,3 +94,5 @@ module.exports(testsFolder)=
     md.pipe(JSONStream.stringify()).pipe(res)
     md.write(f)
     md.end()
+
+  app

@@ -82,7 +82,7 @@ module.exports(testsFolder)=
 
   app.get '/runner/test' @(req, res)
     browserify = require 'browserify'
-    b = browserify()
+    b = browserify({transform = ['pogoify'], extensions = ['.pogo']})
     b.add("#(testsFolder)/#(decodeURIComponent(req.query.src))")
     b.bundle().pipe(res)
 

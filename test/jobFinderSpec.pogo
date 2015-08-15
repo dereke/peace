@@ -28,7 +28,7 @@ describe 'jobFinder'
         log "Temp folder removed #(testFolder)"
 
     it 'returns a list of all the tests that are ready to be run'
-      jobFinder = require '../lib/jobFinder'
+      jobFinder = require '../server/jobFinder'
       results = jobFinder!(testFolder)
       expect(results.length).to.equal(4)
       expect(results).to.containSubset [

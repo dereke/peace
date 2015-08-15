@@ -1,9 +1,9 @@
 window.myLogger = require 'debug'
-log     = window.myLogger 'doom:agent'
+log     = window.myLogger 'peace:agent'
 ajax    = require 'promjax'
 plastiq = require 'plastiq'
 h       = plastiq.html
-testFullTitle = require('./testFullTitle')
+testFullTitle = require('../server/testFullTitle')
 
 window.addEventListener 'load'
   createModel()=
@@ -53,7 +53,7 @@ window.addEventListener 'load'
           model.refresh()
 
       })
-      h('h1', 'Welcome to the test runner of doom!')
+      h('h1', 'The peaceful test runner')
       if (job)
         h(
           'div'

@@ -1,9 +1,10 @@
-log        = (require 'debug') 'doom:server'
+log        = (require 'debug') 'peace:server'
 express    = require 'express'
 bodyParser = require 'body-parser'
 compression = require 'compression'
 path       = require 'path'
 jobFinder  = require './jobFinder'
+pogoify    = require 'pogoify'
 
 distPath = path.resolve(__dirname, '../dist')
 
@@ -12,6 +13,7 @@ module.exports(testsFolder)=
   results = {}
   jobs    = nil
   availableJobs = []
+
 
   app = express()
   app.use(compression())
@@ -82,7 +84,7 @@ module.exports(testsFolder)=
 
   app.get '/runner/test' @(req, res)
     browserify = require 'browserify'
-    b = browserify({transform = ['pogoify'], extensions = ['.pogo']})
+    b = browserify({transform = pogoify, extensions = ['.pogo']})
     b.add("#(testsFolder)/#(decodeURIComponent(req.query.src))")
     b.bundle().pipe(res)
 

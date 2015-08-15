@@ -1,9 +1,9 @@
-log     = (require 'debug') 'doom:agent:test'
+log     = (require 'debug') 'peace:agent:test'
 fsTree  = require 'fs-tree'
 fs      = require 'fs-promise'
 tmp     = require 'tmp'
 httpism = require 'httpism'
-launch  = require '../launch'
+launch  = require '../server/launch'
 
 testPort   = 8765
 httpClient = httpism.api "http://localhost:#(testPort)"

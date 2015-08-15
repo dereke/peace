@@ -1,7 +1,9 @@
-log           = (require 'debug')('doom:qo')
+log           = (require 'debug')('peace:qo')
+pogo          = require 'pogo'
 pogoify       = require 'pogoify'
+glob          = require 'glob'
 browserifyInc = require 'browserify-incremental'
-watch         = require 'node-watch'
+chokidar      = require 'chokidar'
 fs            = require 'fs-promise'
 command       = require 'command-promise'
 
@@ -24,9 +26,23 @@ task 'build'
     b.bundle().on('end', complete).pipe(fs.createWriteStream(__dirname+destination))
 
   bundleAll()=
-    bundle('./lib/agent', '/dist/agent.js')
-    bundle('./lib/mocha-reporter', '/dist/mocha-reporter.js')
+    bundle('./agent/agent', '/dist/agent.js')
+    bundle('./agent/mocha-reporter', '/dist/mocha-reporter.js')
 
-  watch('lib', bundleAll)
-  bundleAll()
+  compileAll()=
+    files = glob!('./server/*.pogo', ^)
+    for each @(file) in (files)
+      pogo.compileFile!(file)
+
+    log 'Pogo compiled'
+
+  compilePogo(file)=
+    pogo.compileFile!(file)
+    log "#(file) compiled"
+
+  chokidar.watch('agent/*').on('change', bundleAll).on('add', bundleAll).on('remove', bundleAll)
+  chokidar.watch('server/*.pogo').on('change', compilePogo).on('add', compilePogo) 
+
+  bundleAll!()
+  compileAll!()
 

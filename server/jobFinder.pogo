@@ -1,5 +1,5 @@
-log   = (require 'debug') 'doom:jobFinder'
-error = (require 'debug') 'doom:jobFinder:error'
+log   = (require 'debug') 'peace:jobFinder'
+error = (require 'debug') 'peace:jobFinder:error'
 Mocha = require 'mocha'
 glob  = require 'glob'
 path  = require 'path'

@@ -1,4 +1,5 @@
 node_modules/
 dist/
+server/*.js
 *.swp
 browserify-cache.json

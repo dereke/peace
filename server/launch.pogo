@@ -1,5 +1,5 @@
-log     = (require 'debug') 'doom:launch'
-createServer = require './lib/server'
+log     = (require 'debug') 'peace:launch'
+createServer = require './server'
 launch      = require 'firefox-launch'
 httpism = require 'httpism'
 http = require 'http'
@@ -12,7 +12,7 @@ module.exports(testFolder, port)=
       browser = nil
 
       server.on 'listening'
-        log "Doom listening on port #(port)"
+        log "peace is listening on port #(port)"
         httpism.get!("http://localhost:#(port)/init", {agent = false})
         browser := launch "http://localhost:#(port)/agent"
 

@@ -1,4 +1,4 @@
-log    = (require 'debug') 'doom:jobFinder:test'
+log    = (require 'debug') 'peace:jobFinder:test'
 fsTree = require 'fs-tree'
 fs     = require 'fs-promise'
 tmp    = require 'tmp'

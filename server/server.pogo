@@ -1,10 +1,12 @@
 log        = (require 'debug') 'peace:server'
 express    = require 'express'
+cors       = require 'cors'
 bodyParser = require 'body-parser'
 compression = require 'compression'
 path       = require 'path'
 jobFinder  = require './jobFinder'
 pogoify    = require 'pogoify'
+glob       = require 'glob'
 
 distPath = path.resolve(__dirname, '../dist')
 
@@ -17,6 +19,7 @@ module.exports(testsFolder)=
 
   app = express()
   app.use(compression())
+  app.use(cors())
 
   app.get '/init' @(req, res)
     log 'Init received'
@@ -50,17 +53,19 @@ module.exports(testsFolder)=
     res.sendFile("#(distPath)/agent.js")
 
   app.get '/results/:name' @(req, res)
-    log "Results requested for #(req.params.name)"
-    res.send(results.(req.params.name))
+    result = results.(req.params.name)
+    if (result)
+      log "Results requested for #(req.params.name)"
+      res.send(result)
+    else
+      res.status(404).end()
 
   app.get '/results' @(req, res)
     res.send(results)
 
   app.put ('/result', bodyParser.json()) @(req, res)
     log("Results received for #(req.body.name), passed: #(req.body.passed)")
-    results.(req.body.name) = {
-      passed = req.body.passed
-    }
+    results.(req.body.name) = req.body
     res.status(200).end()
 
   app.get '/runner' @(req, res)
@@ -85,6 +90,8 @@ module.exports(testsFolder)=
   app.get '/runner/test' @(req, res)
     browserify = require 'browserify'
     b = browserify({transform = pogoify, extensions = ['.pogo']})
+    globals = glob!("#(testsFolder)/global.+(js|pogo)", ^)
+    b.add(globals)
     b.add("#(testsFolder)/#(decodeURIComponent(req.query.src))")
     b.bundle().pipe(res)
 

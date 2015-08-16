@@ -27,7 +27,7 @@ describe 'jobFinder'
         fs.remove!(testFolder)
         log "Temp folder removed #(testFolder)"
 
-    it 'returns a list of all the tests that are ready to be run'
+    xit 'returns a list of all the tests that are ready to be run'
       jobFinder = require '../server/jobFinder'
       results = jobFinder!(testFolder)
       expect(results.length).to.equal(4)

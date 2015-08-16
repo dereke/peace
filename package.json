@@ -5,7 +5,7 @@
   "bin": "./bin/peace.js",
   "scripts": {
     "build": "DEBUG=peace* qo build",
-    "test": "DEBUG=peace* mocha"
+    "test": "DEBUG=peace* ./test/run.js"
   },
   "keywords": [
     "web",
@@ -19,6 +19,7 @@
   "devDependencies": {
     "bluebird": "^2.9.25",
     "browserify-incremental": "^3.0.0",
+    "censeo": "^0.4.9",
     "chai": "^2.3.0",
     "chai-subset": "^1.0.0",
     "chokidar": "^1.0.5",
@@ -27,8 +28,10 @@
     "pogo": "^0.9.10",
     "promjax": "^1.0.2",
     "qo": "^1.1.0",
+    "reqwest": "^2.0.1",
     "tmp": "0.0.25",
-    "trytryagain": "^0.1.0"
+    "trytryagain": "^0.1.0",
+    "xhr2": "^0.1.3"
   },
   "dependencies": {
     "JSONStream": "^1.0.4",
@@ -36,12 +39,14 @@
     "body-parser": "^1.13.1",
     "browserify": "10.2.4",
     "compression": "^1.5.0",
+    "cors": "^2.7.1",
     "debug": "^2.1.3",
     "express": "^4.12.3",
     "firefox-launch": "^1.0.2",
     "fs-extra": "^0.18.2",
     "fs-promise": "^0.3.1",
     "glob": "^5.0.5",
+    "graceful-fs": "^4.1.2",
     "httpism": "^0.2.4",
     "mocha": "^2.2.4",
     "module-deps": "^3.8.1",

@@ -21,7 +21,7 @@ window.addEventListener 'load'
       if (!model.job)
         model.job = model.getNewJob!()
         model.refresh()
-    100
+    5000
 
     model
 
@@ -35,13 +35,15 @@ window.addEventListener 'load'
       'div'
       h.window({
         ontestcomplete(e)=
-          test = e.detail
+          test  = e.detail.test
+          error = e.detail.error
           ajax! {
             url    = '/result'
             method = 'PUT'
             data   = JSON.stringify({
               name   = testFullTitle(test)
-              passed = test.state == 'passed'
+              passed = !error
+              error  = error
             })
             headers = {
               'content-type' = 'application/json'

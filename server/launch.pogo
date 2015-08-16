@@ -1,12 +1,15 @@
-log     = (require 'debug') 'peace:launch'
-createServer = require './server'
-launch      = require 'firefox-launch'
-httpism = require 'httpism'
-http = require 'http'
+log           = (require 'debug') 'peace:launch'
+createServer  = require './server'
+launchBrowser = require 'firefox-launch'
+httpism       = require 'httpism'
+http          = require 'http'
 
-module.exports(testFolder, port)=
+module.exports(testFolder, port, censeo)=
     log "Launching server for folder #(testFolder) on port #(port)"
     server = http.createServer(createServer(testFolder))
+
+    if (censeo)
+      censeo(server)
 
     promise @(success)
       browser = nil
@@ -14,7 +17,7 @@ module.exports(testFolder, port)=
       server.on 'listening'
         log "peace is listening on port #(port)"
         httpism.get!("http://localhost:#(port)/init", {agent = false})
-        browser := launch "http://localhost:#(port)/agent"
+        browser := launchBrowser "http://localhost:#(port)/agent"
 
         stopServer()=
           promise @(success)
@@ -24,4 +27,4 @@ module.exports(testFolder, port)=
 
         success(stopServer)
  
-      server.listen(8765)
+      server.listen(port)

@@ -5,11 +5,23 @@ glob  = require 'glob'
 path  = require 'path'
 pogo  = require 'pogo'
 testFullTitle = require './testFullTitle'
+Module = require 'module'
 
 module.exports(testsPath)=
   mocha = new(Mocha({}))
   log "Get tests in path #(testsPath)"
   files = glob!("#(testsPath)/**/*.+(js|pogo)", ^)
+
+
+  fullFilename = testsPath
+  testModule = new (Module (fullFilename, null))
+  testModule.id = '.'
+  testModule.filename = fullFilename
+  testModule.paths = Module._nodeModulePaths (testsPath)
+  testModule.paths.push(testsPath)
+  module.paths.push(testsPath)
+  log "paths #(testModule.paths)"
+
 
   requireAny(file)=
     if(r/\.pogo$/.test(file))
@@ -33,10 +45,10 @@ module.exports(testsPath)=
 
   tests = []
   mocha.suite.eachTest @(test)
-    log "each test #(test)"
-    tests.push {
-      src  = path.relative(testsPath, test.file)
-      name = testFullTitle(test)
-    }
+    if (!test.pending)
+      tests.push {
+        src  = path.relative(testsPath, test.file)
+        name = testFullTitle(test)
+      }
 
   tests

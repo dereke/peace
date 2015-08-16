@@ -11,15 +11,20 @@ function Remote(runner) {
   });
 
   runner.on('pending', function(test){
-    window.parent.dispatchEvent(new CustomEvent('testpending', { detail: test }));
+    window.parent.dispatchEvent(new CustomEvent('testpending', { detail: { test: test } }));
   });
 
   runner.on('pass', function(test){
-    window.parent.dispatchEvent(new CustomEvent('testcomplete', { detail: test }));
+    window.parent.dispatchEvent(new CustomEvent('testcomplete', { detail: { test: test } }));
   });
 
   runner.on('fail', function(test, err){
-    window.parent.dispatchEvent(new CustomEvent('testcomplete', { detail: test }));
+    var error = {
+      message: err.message,
+      stack: err.stack
+    };
+
+    window.parent.dispatchEvent(new CustomEvent('testcomplete', { detail: { test: test, error: error } }));
   });
 
   runner.on('end', function(){

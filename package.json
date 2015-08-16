@@ -17,7 +17,6 @@
   "author": "Tim Macfarlane, Derek Ekins",
   "license": "ISC",
   "devDependencies": {
-    "bluebird": "^2.9.25",
     "browserify-incremental": "^3.0.0",
     "censeo": "^0.4.9",
     "chai": "^2.3.0",
@@ -25,9 +24,8 @@
     "chokidar": "^1.0.5",
     "command-promise": "^1.6.3",
     "fs-tree": "^0.2.0",
-    "pogo": "^0.9.10",
     "promjax": "^1.0.2",
-    "qo": "^1.1.0",
+    "qo": "^1.2.0",
     "reqwest": "^2.0.1",
     "tmp": "0.0.25",
     "trytryagain": "^0.1.0",
@@ -51,6 +49,7 @@
     "mocha": "^2.2.4",
     "module-deps": "^3.8.1",
     "plastiq": "^1.17.2",
+    "pogo": "^0.10.0",
     "pogoify": "^0.1.1"
   },
   "files": [

@@ -1,33 +1,28 @@
 window.myLogger = require 'debug'
 log     = window.myLogger 'peace:agent'
 ajax    = require 'promjax'
+socketIO= require 'socket.io-client'
 plastiq = require 'plastiq'
 h       = plastiq.html
 testFullTitle = require('../server/testFullTitle')
 
 window.addEventListener 'load'
+  socket = socketIO.connect(window.location.origin)
   createModel()=
     model = {
-      getNewJob()=
-        response = ajax! {
-          url           = '/job'
-        }
-
-        console.log(response)
-        if (response)
-          JSON.parse(response)
+      readyForJob()=
+        socket.emit('ready-for-job')
     }
-    setInterval
-      if (!model.job)
-        model.job = model.getNewJob!()
-        model.refresh()
-    5000
 
+    socket.on 'job' @(job)
+      model.job = job
+      model.refresh()
+
+    model.readyForJob()
     model
 
   render(model)=
     model.refresh = plastiq.html.refresh
-
 
     job = model.job
     console.log('Running job', job)
@@ -51,7 +46,8 @@ window.addEventListener 'load'
           }
 
           console.log('complete', model.job)
-          model.job = model.getNewJob!()
+          model.job = nil
+          model.readyForJob()
           model.refresh()
 
       })

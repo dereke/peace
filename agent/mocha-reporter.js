@@ -1,5 +1,5 @@
 var Base = require('mocha/lib/reporters/base');
-window.Remote = Remote;
+window.Remote = module.exports = Remote;
 
 function Remote(runner) {
   Base.call(this, runner);
@@ -33,4 +33,4 @@ function Remote(runner) {
   });
 }
 
-Remote.prototype.__proto__ = Base.prototype;
+Remote.prototype = Object.create(Base.prototype);

@@ -3,8 +3,9 @@ if (log.enable)
   log.enable('*')
 
 reqwest = require 'reqwest'
+port = 8765
 
-censeo  = (require 'censeo').client(8765)
+censeo  = (require 'censeo/client')(port)
 get(url)=
   reqwest! { url = "http://localhost:8766#(url)" }
 
@@ -13,31 +14,33 @@ xdescribe 'basic'
    expect(1).to.equal(1)
 
 describe 'peace'
-  server = {
-    port = 8766
-  }
   testFolder = nil
+  serverTask = nil
 
   beforeEach
-    server.testFolder := censeo.run!(promises: true)
+    serverTask := nil
+
+    testFolder := censeo.run!()
       tmp     = serverRequire 'tmp'
       tmp.dir!(^)
 
-    console.log('testFolder', server.testFolder)
-
   afterEach
+    if (serverTask)
+      serverTask.stop!()
+      console.log('stopped each')
+
     if (testFolder)
-      censeo.run!(promises: true, context: server)
+      censeo.run!(context: {testFolder = testFolder})
         fs = require 'fs-promise'
         fs.remove!(testFolder)
-        log "Temp folder removed #(testFolder)"
+        console.log "Temp folder removed #(testFolder)"
 
-    if (server.task)
-      server.task.stop!()
 
   context 'runs tests'
     beforeEach
-      server.task = censeo.runTask!(promises: true, context: server)
+      console.log "launch peace on port #(port)"
+      serverTask := censeo.runTask!(context: {port = port, testFolder = testFolder})
+        console.log "launching on port #(port)"
         launch  = serverRequire './server/launch'
         fsTree  = require 'fs-tree'
         fsTree! (testFolder) {
@@ -53,25 +56,20 @@ describe 'peace'
                             });"
           }
         }
-        stopServer = launch!(testFolder, port)
+        stopServer = launch!(testFolder, {port = port})
         {
           stop(done)=
-            console.log 'stopping'
-            stopServer!()
-            console.log 'stopped'
-            done()
+            stopServer(done)
         }
       
     it 'runs a passing test and gives results indicating a pass' =>
       self.timeout 10000 
-      log 'starting test'
       retry!(timeout = 10000, interval = 500)
         result = get! "/results/one.first"
         expect(result.passed).to.be.true
 
     it 'runs a failing test and gives results indicating a pass' =>
       self.timeout 10000
-      console.log 'aserting..'
       retry!(timeout = 10000, interval = 500)
         result = get! "/results/one.second"
         expect(result.passed).to.be.false
@@ -79,34 +77,30 @@ describe 'peace'
 
   context 'runs pogo tests'
     beforeEach
-      server.stop = censeo.runTask!(promises: true, context: server)
+      serverTask := censeo.runTask!(context: {port = port, testFolder = testFolder})
         launch  = serverRequire './server/launch'
         fsTree  = require 'fs-tree'
         fsTree! (testFolder) {
           test = {
             'myPogoSpec.pogo' = "
-  describe 'pogo'
-    it 'first'
-      console.log('ran with no errors')
+describe 'pogo'
+  it 'first'
+    console.log 'ran with no errors'
 
-    it 'second'
-      throw(new(Error('This test fails')))
+  it 'second'
+    throw(new(Error('This test fails')))
   "
           }
         }
-        stopServer = launch!(testFolder, port)
+        stopServer = launch!(testFolder, {port = port})
         {
           stop(done)=
-            console.log 'stopping'
-            stopServer!()
-            console.log 'stopped'
-            done()
+            stopServer(done)
         }
 
 
-    xit 'runs a passing test and gives results indicating a pass' =>
+    it 'runs a passing test and gives results indicating a pass' =>
       self.timeout 5000
-      log 'starting test'
       retry!(timeout = 4000, interval = 500)
         result = get! "/results/pogo.first"
         expect(result.passed).to.be.true

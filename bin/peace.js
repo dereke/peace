@@ -10,5 +10,5 @@ var launch     = require('../server/launch');
 var testFolder = path.resolve(process.cwd(), process.argv[2]);
 var port       = process.argv[3] || 8765;
 
-launch(testFolder, port);
+launch(testFolder, {port: port});
 

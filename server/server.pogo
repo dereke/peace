@@ -7,6 +7,8 @@ path       = require 'path'
 jobFinder  = require './jobFinder'
 pogoify    = require 'pogoify'
 glob       = require 'glob'
+http          = require 'http'
+socketIO      = require 'socket.io'
 
 distPath = path.resolve(__dirname, '../dist')
 
@@ -20,6 +22,8 @@ module.exports(testsFolder)=
   app = express()
   app.use(compression())
   app.use(cors())
+  httpServer   = http.createServer(app)
+  socketServer = socketIO(httpServer)
 
   app.get '/init' @(req, res)
     log 'Init received'
@@ -32,18 +36,20 @@ module.exports(testsFolder)=
     log "#(availableJobs.length) jobs available"
     res.send('done')
 
-  app.get '/job' @(req, res)
-    job = availableJobs.shift()
-    if (job)
-      res.send(job)
-    else
-      res.status(200).end()
+  socketServer.on 'connection' @(socket)
+    log 'agent connected'
+    socket.on 'ready-for-job' @(data)
+      log 'agent ready'
+      job = availableJobs.shift()
+      if (job)
+        log 'agent sent job'
+        socket.emit('job', job)
 
   app.get '/agent' @(req, res)
     res.send "
       <html>
       <head>
-        <script defer src='/agent.js'></script>
+        <script src='/agent.js'></script>
       </head>
       <body></body>
       </html>
@@ -73,6 +79,7 @@ module.exports(testsFolder)=
     res.send "<html>
                 <body>
                   <div id='mocha'></div>
+                  <script src='/runner/log.js'></script>
                   <script src='/runner/mocha.js'></script>
                   <script src='/runner/mocha-reporter.js'></script>
                   <script>mocha.setup({ui: 'bdd', reporter: Remote})</script>
@@ -81,11 +88,28 @@ module.exports(testsFolder)=
                 </body>
               </html>"
 
+/*//this is a test version trying to browserify mocha.. it doesn't work at the moment due to the way mocha is assembled
+  app.get '/runner' @(req, res)
+    src = decodeURIComponent(req.query.src)
+    res.send "<html>
+                <body>
+                  <div id='mocha'></div>
+                  <script src='/runner/run.js'></script>
+                </body>
+              </html>"
+
+  app.get '/runner/run.js' @(req, res)
+    res.sendFile("#(distPath)/run.js")
+              */
+
   app.get '/runner/mocha.js' @(req, res)
     res.sendFile("#(path.resolve(__dirname, '../'))/node_modules/mocha/mocha.js")
 
   app.get '/runner/mocha-reporter.js' @(req, res)
     res.sendFile("#(distPath)/mocha-reporter.js")
+
+  app.get '/runner/log.js' @(req, res)
+    res.sendFile("#(distPath)/log.js")
 
   app.get '/runner/test' @(req, res)
     browserify = require 'browserify'
@@ -104,4 +128,7 @@ module.exports(testsFolder)=
     md.write(f)
     md.end()
 
-  app
+  {
+    http   = httpServer
+    socket = socketServer
+  }

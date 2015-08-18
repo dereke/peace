@@ -5,7 +5,7 @@
   "bin": "./bin/peace.js",
   "scripts": {
     "build": "DEBUG=peace* qo build",
-    "test": "DEBUG=peace* ./test/run.js"
+    "test": "DEBUG=peace*,censeo* ./test/run.js"
   },
   "keywords": [
     "web",
@@ -17,25 +17,26 @@
   "author": "Tim Macfarlane, Derek Ekins",
   "license": "ISC",
   "devDependencies": {
-    "browserify-incremental": "^3.0.0",
-    "censeo": "^0.4.9",
+    "browserify-incremental": "^3.0.1",
+    "censeo": "^0.5.3",
     "chai": "^2.3.0",
     "chai-subset": "^1.0.0",
     "chokidar": "^1.0.5",
     "command-promise": "^1.6.3",
-    "fs-tree": "^0.2.0",
+    "fs-tree": "git://github.com/dereke/fs-tree.git",
+    "httpism": "^1.4.1",
     "promjax": "^1.0.2",
     "qo": "^1.2.0",
     "reqwest": "^2.0.1",
     "tmp": "0.0.25",
-    "trytryagain": "^0.1.0",
+    "trytryagain": "^1.1.0",
     "xhr2": "^0.1.3"
   },
   "dependencies": {
     "JSONStream": "^1.0.4",
-    "bluebird": "^2.9.34",
     "body-parser": "^1.13.1",
-    "browserify": "10.2.4",
+    "browserify": "^11.0.1",
+    "chrome-launch": "^1.1.3",
     "compression": "^1.5.0",
     "cors": "^2.7.1",
     "debug": "^2.1.3",
@@ -46,11 +47,14 @@
     "glob": "^5.0.5",
     "graceful-fs": "^4.1.2",
     "httpism": "^0.2.4",
-    "mocha": "^2.2.4",
+    "log-to-socket": "0.0.1",
+    "mocha": "^2.2.5",
     "module-deps": "^3.8.1",
     "plastiq": "^1.17.2",
     "pogo": "^0.10.0",
-    "pogoify": "^0.1.1"
+    "pogoify": "^0.1.1",
+    "socket.io": "^1.3.6",
+    "socket.io-client": "^1.3.6"
   },
   "files": [
     "dist",

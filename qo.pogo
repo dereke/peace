@@ -29,7 +29,7 @@ task 'build'
     bundle('./agent/agent', '/dist/agent.js')
     bundle('./agent/mocha-reporter', '/dist/mocha-reporter.js')
     bundle('./agent/log', '/dist/log.js')
-    bundle('./agent/run', '/dist/run.js')
+    //bundle('./agent/run', '/dist/run.js')
 
   compileAll()=
     files = glob!('./server/*.pogo', ^)

@@ -3,15 +3,15 @@ log           = (require 'debug') 'peace:launch'
 createServer  = require './server'
 launchBrowser = require 'chrome-launch'
 httpism       = require 'httpism'
+enableDestroy = require 'server-destroy'
 
-module.exports(testFolder, options)=
-    port        = options.port
-    configure   = options.configure
 
+module.exports(testFolder, port: 8765, configure: @{})=
     log "Launching server for folder #(testFolder) on port #(port)"
     server = createServer(testFolder)
     httpServer = server.http
     socketServer = server.socket
+    enableDestroy(httpServer)
 
     socketServer.on 'connection' @(socket)
       socket.on 'log' @(logEntry)
@@ -27,20 +27,22 @@ module.exports(testFolder, options)=
         browser = launchBrowser("http://localhost:#(port)/agent")
         log "Browser opened"
 
-        stopAll(done)=
+        stopAll()=
+          promise @(success)
+            browser.on 'close'
+              log 'browser closed'
+              httpServer.on 'close'
+                log 'server closed'
+                success(true)
 
-          browser.on 'close'
-            log 'browser closed'
-            httpServer.on 'close'
-              log 'server closed'
-              done(true)
+              httpServer.destroy()
 
-            httpServer.unref()
-            httpServer.close()
+            browser.kill()
 
-          browser.kill()
-
-        success(stopAll)
+        success({
+          stop = stopAll
+          port = port
+        })
  
       httpServer.on 'error' @(e)
         if (e.code == 'EADDRINUSE')

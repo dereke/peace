@@ -1,112 +1,93 @@
-log     = (require 'debug') 'peace:test:peace'
-if (log.enable)
-  log.enable('*')
-
-reqwest = require 'reqwest'
-port = 8765
-
-censeo  = (require 'censeo/client')(port)
-get(url)=
-  reqwest! { url = "http://localhost:8766#(url)" }
-
-xdescribe 'basic'
-  it 'does'
-   expect(1).to.equal(1)
+httpism = require 'httpism'
+censeo  = (require 'censeo/client')(8765)
 
 describe 'peace'
-  testFolder = nil
-  serverTask = nil
+  server = nil
 
-  beforeEach
-    serverTask := nil
+  get(url)=
+    httpism.get! "http://localhost:#(server.data.port)#(url)".body
 
-    testFolder := censeo.run!()
+  runTests(testFiles, exec)=
+    server := censeo.runTask!(context: {testFiles = testFiles})
+      launch  = serverRequire './server/launch'
       tmp     = serverRequire 'tmp'
-      tmp.dir!(^)
+      fsTree  = serverRequire 'fs-tree'
 
-  afterEach
-    if (serverTask)
-      serverTask.stop!()
-      console.log('stopped each')
+      testPath = tmp.dir!(^)
+      fsTree! (testPath, testFiles)
 
-    if (testFolder)
-      censeo.run!(context: {testFolder = testFolder})
-        fs = require 'fs-promise'
-        fs.remove!(testFolder)
-        console.log "Temp folder removed #(testFolder)"
+      launchResult = launch!(testPath)
+      {
+        stop()=
+          launchResult.stop!()
+          fs = serverRequire 'fs-promise'
+          fs.remove!(testPath)
 
-
-  context 'runs tests'
-    beforeEach
-      console.log "launch peace on port #(port)"
-      serverTask := censeo.runTask!(context: {port = port, testFolder = testFolder})
-        console.log "launching on port #(port)"
-        launch  = serverRequire './server/launch'
-        fsTree  = require 'fs-tree'
-        fsTree! (testFolder) {
-          test = {
-            'oneSpec.js' = "
-                            describe('one', function(){
-                              it('first', function(){
-                                console.log('ran with no errors');
-                              });
-                              it('second', function(){
-                                throw new Error('This test fails');
-                              });
-                            });"
-          }
+        data = {
+          port = launchResult.port
         }
-        stopServer = launch!(testFolder, {port = port})
-        {
-          stop(done)=
-            stopServer(done)
+      }
+
+    try
+      exec!()
+    finally
+      server.stop!()
+
+
+  describe 'runs javascript tests'
+    it 'runs a passing test' =>
+      self.timeout 5000
+      runTests! {
+          'goodSpec.js' = "
+            describe('goodJS', function(){
+              it('shouldPass', function(){
+                console.log('ran with no errors');
+              });
+            });"
         }
-      
-    it 'runs a passing test and gives results indicating a pass' =>
-      self.timeout 10000 
-      retry!(timeout = 10000, interval = 500)
-        result = get! "/results/one.first"
-        expect(result.passed).to.be.true
+        retry!(timeout = 4000, interval = 500)
+          result = get! "/results/goodJS.shouldPass"
+          expect(result.passed).to.equal(true)
 
-    it 'runs a failing test and gives results indicating a pass' =>
-      self.timeout 10000
-      retry!(timeout = 10000, interval = 500)
-        result = get! "/results/one.second"
-        expect(result.passed).to.be.false
-        expect(result.error.message).to.equal('This test fails')
 
-  context 'runs pogo tests'
-    beforeEach
-      serverTask := censeo.runTask!(context: {port = port, testFolder = testFolder})
-        launch  = serverRequire './server/launch'
-        fsTree  = require 'fs-tree'
-        fsTree! (testFolder) {
-          test = {
-            'myPogoSpec.pogo' = "
-describe 'pogo'
-  it 'first'
+    it 'runs a failing test' =>
+      self.timeout 5000
+      runTests! {
+        'badSpec.js' = "
+            describe('badJS', function(){
+              it('shouldFail', function(){
+                throw new Error('This test fails');
+              });
+            });"
+        }
+        retry!(timeout = 4000, interval = 500)
+          result = get! "/results/badJS.shouldFail"
+          expect(result.passed).to.be.false
+          expect(result.error.message).to.equal('This test fails')
+
+  describe 'runs pogo tests'
+    it 'runs a passing test' =>
+      self.timeout 5000
+      runTests! {
+        'myPogoSpec.pogo' = "
+describe 'goodPogo'
+  it 'shouldPass'
     console.log 'ran with no errors'
+  "
+      }
+        retry!(timeout = 4000, interval = 500)
+          result = get! "/results/goodPogo.shouldPass"
+          expect(result.passed).to.be.true
 
-  it 'second'
+    it 'runs a failing test' =>
+      self.timeout 5000
+      runTests! {
+        'myPogoSpec.pogo' = "
+describe 'badPogo'
+  it 'shouldFail'
     throw(new(Error('This test fails')))
   "
-          }
-        }
-        stopServer = launch!(testFolder, {port = port})
-        {
-          stop(done)=
-            stopServer(done)
-        }
-
-
-    it 'runs a passing test and gives results indicating a pass' =>
-      self.timeout 5000
-      retry!(timeout = 4000, interval = 500)
-        result = get! "/results/pogo.first"
-        expect(result.passed).to.be.true
-
-    xit 'runs a failing test and gives results indicating a pass' =>
-      self.timeout 5000
-      retry!(timeout = 4000, interval = 500)
-        result = get! "/results/pogo.second"
-        expect(result.passed).to.be.false
+      }
+        retry!(timeout = 4000, interval = 500)
+          result = get! "/results/badPogo.shouldFail"
+          expect(result.passed).to.be.false

@@ -13,11 +13,10 @@ socketIO      = require 'socket.io'
 distPath = path.resolve(__dirname, '../dist')
 
 module.exports(testsFolder)=
-  log("Initialising server with folder #(testsFolder)")
+  console.log("Initialising server with folder #(testsFolder)")
   results = {}
   jobs    = nil
   availableJobs = []
-
 
   app = express()
   app.use(compression())
@@ -45,6 +44,10 @@ module.exports(testsFolder)=
         log 'agent sent job'
         socket.emit('job', job)
 
+    socket.on 'result' @(result)
+      log("Results received for #(result.name), passed: #(result.passed)")
+      results.(result.name) = result
+
   app.get '/agent' @(req, res)
     res.send "
       <html>
@@ -59,20 +62,23 @@ module.exports(testsFolder)=
     res.sendFile("#(distPath)/agent.js")
 
   app.get '/results/:name' @(req, res)
-    result = results.(req.params.name)
-    if (result)
-      log "Results requested for #(req.params.name)"
-      res.send(result)
-    else
-      res.status(404).end()
+    result = results.(req.params.name) || {state = 'execution-pending'}
+
+    log "result requested for #(req.params.name) - run: #(JSON.stringify(result))"
+
+    res.header("Cache-Control", "no-cache, no-store, must-revalidate")
+    res.header("Pragma", "no-cache")
+    res.header("Expires", 0)
+
+    log "Results requested for #(req.params.name)"
+    res.send(result)
 
   app.get '/results' @(req, res)
+    res.header("Cache-Control", "no-cache, no-store, must-revalidate")
+    res.header("Pragma", "no-cache")
+    res.header("Expires", 0)
     res.send(results)
 
-  app.put ('/result', bodyParser.json()) @(req, res)
-    log("Results received for #(req.body.name), passed: #(req.body.passed)")
-    results.(req.body.name) = req.body
-    res.status(200).end()
 
   app.get '/runner' @(req, res)
     src = decodeURIComponent(req.query.src)

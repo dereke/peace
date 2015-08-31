@@ -1,5 +1,5 @@
 var Base = require('mocha/lib/reporters/base');
-window.Remote = module.exports = Remote;
+window.Remote = Remote;
 
 function Remote(runner) {
   Base.call(this, runner);

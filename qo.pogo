@@ -2,24 +2,23 @@ log           = (require 'debug')('peace:qo')
 pogo          = require 'pogo'
 pogoify       = require 'pogoify'
 glob          = require 'glob'
-browserifyInc = require 'browserify-incremental'
+browserify    = require 'browserify'
 chokidar      = require 'chokidar'
 fs            = require 'fs-promise'
 command       = require 'command-promise'
 
 task 'build'
   fs.mkdirp! 'dist'
-  bundle(source, destination)=
+  bundle(source, destination, options)=
+    options := options || {}
     log "Bundling #(source)"
     complete()=
       log "Bundled #(source)"
 
-    b = browserifyInc {
-      cache           = {}
-      packageCache    = {}
+    b = browserify {
       fullPaths       = true
       extensions      = ['.pogo']
-      cacheFile       = './browserify-cache.json'
+      alias           = options.alias
     }
     b.add(source)
     b.transform (pogoify)
@@ -29,7 +28,12 @@ task 'build'
     bundle('./agent/agent', '/dist/agent.js')
     bundle('./agent/mocha-reporter', '/dist/mocha-reporter.js')
     bundle('./agent/log', '/dist/log.js')
-    //bundle('./agent/run', '/dist/run.js')
+
+/*
+    bundle('./agent/run', '/dist/run.js', {
+      alias = ['node_modules/mocha/lib/mocha.js:./lib-cov/mocha']
+  })
+*/
 
   compileAll()=
     files = glob!('./server/*.pogo', ^)
@@ -43,7 +47,7 @@ task 'build'
     log "#(file) compiled"
 
   chokidar.watch('agent/*').on('change', bundleAll).on('add', bundleAll).on('remove', bundleAll)
-  chokidar.watch('server/*.pogo').on('change', compilePogo).on('add', compilePogo) 
+  chokidar.watch('server/*.pogo').on('change', compilePogo).on('add', compilePogo)
 
   bundleAll!()
   compileAll!()

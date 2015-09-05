@@ -18,6 +18,7 @@ module.exports(testsFolder)=
   jobs    = nil
   availableJobs = []
 
+
   app = express()
   app.use(compression())
   app.use(cors())
@@ -34,6 +35,9 @@ module.exports(testsFolder)=
     log 'Init complete'
     log "#(availableJobs.length) jobs available"
     res.send('done')
+
+  socketServer.on 'error' @(error)
+    log('Socket Error', error)
 
   socketServer.on 'connection' @(socket)
     log 'agent connected'
@@ -94,7 +98,8 @@ module.exports(testsFolder)=
                 </body>
               </html>"
 
-/*//this is a test version trying to browserify mocha.. it doesn't work at the moment due to the way mocha is assembled
+/*
+//this is a test version trying to browserify mocha.. it doesn't work at the moment due to the way mocha is assembled
   app.get '/runner' @(req, res)
     src = decodeURIComponent(req.query.src)
     res.send "<html>
@@ -106,8 +111,8 @@ module.exports(testsFolder)=
 
   app.get '/runner/run.js' @(req, res)
     res.sendFile("#(distPath)/run.js")
-              */
 
+*/
   app.get '/runner/mocha.js' @(req, res)
     res.sendFile("#(path.resolve(__dirname, '../'))/node_modules/mocha/mocha.js")
 

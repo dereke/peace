@@ -1,9 +1,6 @@
-var Base = require('mocha/lib/reporters/base');
 window.Remote = Remote;
 
 function Remote(runner) {
-  Base.call(this, runner);
-
   var self = this;
 
   runner.on('start', function(){
@@ -29,8 +26,6 @@ function Remote(runner) {
 
   runner.on('end', function(){
     window.parent.dispatchEvent(new CustomEvent('testended'));
-    self.epilogue();
   });
 }
 
-Remote.prototype = Object.create(Base.prototype);

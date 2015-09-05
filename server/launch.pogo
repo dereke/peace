@@ -5,13 +5,15 @@ launchBrowser = require 'chrome-launch'
 httpism       = require 'httpism'
 enableDestroy = require 'server-destroy'
 
-
 module.exports(testFolder, port: 8765, configure: @{})=
     log "Launching server for folder #(testFolder) on port #(port)"
     server = createServer(testFolder)
     httpServer = server.http
     socketServer = server.socket
     enableDestroy(httpServer)
+    socketServer.on('connection') @(socket)
+      socket.on('log') @(logEntry)
+        console.log.apply(console, logEntry.args)
 
     socketServer.on 'connection' @(socket)
       socket.on 'log' @(logEntry)
@@ -25,20 +27,22 @@ module.exports(testFolder, port: 8765, configure: @{})=
         log "peace is listening on port #(port)"
         httpism.get!("http://localhost:#(port)/init", {agent = false})
         browser = launchBrowser("http://localhost:#(port)/agent")
-        log "Browser opened"
+        log "Browser opened #(browser.pid)"
 
         stopAll()=
-          promise @(success)
+          promise @(stopSuccess)
             browser.on 'close'
               log 'browser closed'
               httpServer.on 'close'
                 log 'server closed'
-                success(true)
+                console.log('Peace Stopped', port, testFolder)
+                stopSuccess(true)
 
               httpServer.destroy()
 
             browser.kill()
 
+        console.log('Peace Started', port, testFolder)
         success({
           stop = stopAll
           port = port

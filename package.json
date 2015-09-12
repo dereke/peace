@@ -2,7 +2,9 @@
   "name": "peace",
   "version": "0.1.0",
   "description": "You can't have peace without good tests",
-  "bin": "./bin/peace.js",
+  "bin": {
+    "peace": "./bin/peace.js"
+  },
   "scripts": {
     "build": "DEBUG=peace* qo build",
     "test": "DEBUG=peace*,censeo* ./test/run.js"
@@ -64,5 +66,17 @@
     "bin",
     "server/*.js",
     "test-example"
-  ]
+  ],
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dereke/peace.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dereke/peace/issues"
+  },
+  "homepage": "https://github.com/dereke/peace"
 }

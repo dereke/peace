@@ -1,22 +1,29 @@
 socketIO= require 'socket.io-client'
 plastiq = require 'plastiq'
 h       = plastiq.html
-http = require 'httpism'
-require './log'
+http    = require 'httpism'
 testFullTitle = require('../server/testFullTitle')
+logToServer = require './log'
 
-window.addEventListener 'load'
-  socket = socketIO.connect(window.location.origin)
+module.exports(container, httpUrl, socketUrl, initialJob)=
+  debugger
+  httpUrl := httpUrl || window.location.origin
+  socketUrl := socketUrl || httpUrl
+
+  socket = socketIO(socketUrl)
+  logToServer(socketUrl)
+
   socket.on 'error' @(error)
     console.log('error', error)
 
   socket.on 'disconnect' @(e)
-    console.log('DISCONNECT')
+    console.log('disconnected')
 
   socket.on 'connect'
-    console.log 'Agent connected to server'
+    console.log "Agent connected to server #(httpUrl)"
     createModel()=
       model = {
+        results = []
         readyForJob()=
           socket.emit('ready-for-job')
       }
@@ -25,7 +32,15 @@ window.addEventListener 'load'
         model.job = job
         model.refresh()
 
-      model.readyForJob()
+      socket.on 'result' @(result)
+        model.results.push(result)
+        model.refresh()
+
+      if (initialJob)
+        model.job = initialJob
+      else
+        model.readyForJob()
+
       model
 
     render(model)=
@@ -36,6 +51,22 @@ window.addEventListener 'load'
         h(
           'div'
           h('h1', 'The peaceful test runner')
+          h(
+            'ul.results'
+            model.results.map @(result)
+              h(
+                'li'
+                h('a', {href = "#(httpUrl)/runner/?src=#(encodeURIComponent(result.src))&grep=#(encodeURIComponent(result.name))", target= "_blank"}, result.name)
+                ' '
+                if (result.passed)
+                  'Passed'
+                else
+                  'Failed'
+              )
+          )
+          if (!job)
+            h('div', 'No jobs to run at the moment')
+
           if (job)
             h(
               'div'
@@ -53,6 +84,7 @@ window.addEventListener 'load'
 
                     socket.emit 'result' {
                       name   = testFullTitle(test)
+                      src    = job.src
                       passed = passed
                       error  = error
                     }
@@ -61,16 +93,19 @@ window.addEventListener 'load'
                   catch(e)
                     console.log("AGENT: ERROR #(e)")
               })
+
               h(
                 'iframe'
-                {src = "/runner/?src=#(encodeURIComponent(job.src))&grep=#(encodeURIComponent(job.name))"}
+                {
+                  src = "#(httpUrl)/runner/?src=#(encodeURIComponent(job.src))&grep=#(encodeURIComponent(job.name))"
+                  width = '100%'
+                  height = '100%'
+                }
               )
             )
-          else
-            h('div', 'No jobs to run at the moment')
         )
       catch(e)
         console.log('AGENTERROR', e)
         h('div', e)
 
-    plastiq.append(document.body, render, createModel())
+    plastiq.append(container, render, createModel())

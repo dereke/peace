@@ -8,32 +8,25 @@ qs(name)=
   name      := name.replace(r/[\[]/, "\\[").replace(r/[\]]/, "\\]")
   regex     = new(RegExp("[\\?&]#(name)=([^&#]*)"))
   results   = regex.exec(location.search)
-  if (results && results.1)
-     decodeURIComponent(results.1.replace(r/\+/g, " "))
+  if (results)
+     decodeURIComponent(results[1].replace(r/\+/g, " "))
   else
     ''
 
 
-process.stdout = {}
-Mocha = require 'mocha'
+console.log 'pre moch'
+mocha = require 'mocha/lib/mocha'
+console.log 'post moch'
 reporter = require './mocha-reporter'
+console.log 'repo'
 
-mocha = new(Mocha({
-  ui = 'bdd'
-  delay = true
-  reporter = reporter
-  files = ["/runner/test?src=#(qs('src'))"]
-}))
-mocha.suite.emit('pre-require', window, null, mocha)
-
+mocha.setup({ui = 'bdd', reporter})
 console.log 'setup'
 testScript = document.createElement('script')
-testScript.type = 'text/javascript'
 testScript.onload()=
   console.log 'run'
-  debugger
   mocha.run()
 
 testScript.src = "/runner/test?src=#(qs('src'))"
 console.log 'added'
-document.getElementsByTagName('head').0.appendChild(testScript)
+document.getElementsByTagName('script').0.parentNode.appendChild(testScript)

@@ -1,39 +1,10 @@
-httpism = require 'httpism'
-censeo  = (require 'censeo/client')(8765)
+httpism  = require 'httpism'
+runTests = require './runTestsInPeace'
 
-describe 'peace'
-  server = nil
+get(server, url)=
+  httpism.get! "http://localhost:#(server.data.port)#(url)".body
 
-  get(url)=
-    httpism.get! "http://localhost:#(server.data.port)#(url)".body
-
-  runTests(testFiles, exec)=
-    server := censeo.runTask!(context: {testFiles = testFiles})
-      launch  = serverRequire './server/launch'
-      tmp     = serverRequire 'tmp'
-      fsTree  = serverRequire 'fs-tree'
-
-      testPath = tmp.dir!(^)
-      fsTree! (testPath, testFiles)
-
-      launchResult = launch!(testPath)
-      {
-        stop()=
-          launchResult.stop!()
-          fs = serverRequire 'fs-promise'
-          fs.remove!(testPath)
-
-        data = {
-          port = launchResult.port
-        }
-      }
-
-    try
-      exec!()
-    finally
-      server.stop!()
-
-
+describe 'runTests'
   describe 'runs javascript tests'
     it 'runs a passing test' =>
       self.timeout 5000
@@ -44,9 +15,9 @@ describe 'peace'
                 console.log('ran with no errors');
               });
             });"
-        }
+        } @(server)
         retry!(timeout = 4000, interval = 500)
-          result = get! "/results/goodJS.shouldPass"
+          result = get! (server) "/results/goodJS.shouldPass"
           expect(result.passed).to.equal(true)
 
 
@@ -59,9 +30,9 @@ describe 'peace'
                 throw new Error('This test fails');
               });
             });"
-        }
+        } @(server)
         retry!(timeout = 4000, interval = 500)
-          result = get! "/results/badJS.shouldFail"
+          result = get! (server) "/results/badJS.shouldFail"
           expect(result.passed).to.be.false
           expect(result.error.message).to.equal('This test fails')
 
@@ -74,9 +45,9 @@ describe 'goodPogo'
   it 'shouldPass'
     console.log 'ran with no errors'
   "
-      }
+      } @(server)
         retry!(timeout = 4000, interval = 500)
-          result = get! "/results/goodPogo.shouldPass"
+          result = get! (server) "/results/goodPogo.shouldPass"
           expect(result.passed).to.be.true
 
     it 'runs a failing test' =>
@@ -87,7 +58,7 @@ describe 'badPogo'
   it 'shouldFail'
     throw(new(Error('This test fails')))
   "
-      }
+      } @(server)
         retry!(timeout = 4000, interval = 500)
-          result = get! "/results/badPogo.shouldFail"
+          result = get! (server) "/results/badPogo.shouldFail"
           expect(result.passed).to.be.false

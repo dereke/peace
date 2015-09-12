@@ -5,11 +5,13 @@ launchBrowser = require 'chrome-launch'
 httpism       = require 'httpism'
 enableDestroy = require 'server-destroy'
 
-module.exports(testFolder, port: 8765, configure: @{})=
+module.exports(testFolder, port: 8765, agent: true, configure: @{})=
     log "Launching server for folder #(testFolder) on port #(port)"
     server = createServer(testFolder)
-    httpServer = server.http
+    app          = server.app
+    httpServer   = server.http
     socketServer = server.socket
+
     enableDestroy(httpServer)
     socketServer.on('connection') @(socket)
       socket.on('log') @(logEntry)
@@ -20,34 +22,44 @@ module.exports(testFolder, port: 8765, configure: @{})=
         (debug("peace:#(logEntry.source)")).apply(debug, logEntry.args)
 
     if (configure)
-      configure(httpServer, socketServer)
+      configure(httpServer, socketServer, app)
 
-    promise @(success)
+    promise @(serverStarted)
       httpServer.on 'listening'
         log "peace is listening on port #(port)"
-        httpism.get!("http://localhost:#(port)/init", {agent = false})
-        browser = launchBrowser("http://localhost:#(port)/agent")
-        log "Browser opened #(browser.pid)"
+        httpism.get! "http://localhost:#(port)/init"
+        tasks = []
+        if (agent)
+          browser = launchBrowser("http://localhost:#(port)/agent")
+          log "Browser opened #(browser.pid)"
+
+          tasks.push
+            promise @(browserStopped)
+              browser.on 'close'
+                console.log 'Browser Closed'
+                browserStopped()
+
+              browser.kill()
+
+
+        tasks.push
+          promise @(serverStopped)
+            httpServer.on 'close'
+              console.log('Peace Stopped')
+              serverStopped()
+
+            httpServer.destroy()
 
         stopAll()=
-          promise @(stopSuccess)
-            browser.on 'close'
-              log 'browser closed'
-              httpServer.on 'close'
-                log 'server closed'
-                console.log('Peace Stopped', port, testFolder)
-                stopSuccess(true)
-
-              httpServer.destroy()
-
-            browser.kill()
+          for each @(task) in (tasks)
+            task!()
 
         console.log('Peace Started', port, testFolder)
-        success({
+        serverStarted {
           stop = stopAll
           port = port
-        })
- 
+        }
+
       httpServer.on 'error' @(e)
         if (e.code == 'EADDRINUSE')
           ++port

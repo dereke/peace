@@ -22,8 +22,11 @@ module.exports(testsFolder)=
   app = express()
   app.use(compression())
   app.use(cors())
+  app.set('etag', false)
   httpServer   = http.createServer(app)
   socketServer = socketIO(httpServer)
+  socketServer.on 'error' @(e)
+    log("socker error", e)
 
   app.get '/init' @(req, res)
     log 'Init received'
@@ -35,9 +38,6 @@ module.exports(testsFolder)=
     log 'Init complete'
     log "#(availableJobs.length) jobs available"
     res.send('done')
-
-  socketServer.on 'error' @(error)
-    log('Socket Error', error)
 
   socketServer.on 'connection' @(socket)
     log 'agent connected'
@@ -51,12 +51,18 @@ module.exports(testsFolder)=
     socket.on 'result' @(result)
       log("Results received for #(result.name), passed: #(result.passed)")
       results.(result.name) = result
+      socket.emit('result', result)
 
   app.get '/agent' @(req, res)
     res.send "
       <html>
       <head>
         <script src='/agent.js'></script>
+        <script type='text/javascript'>
+          window.addEventListener('load', function(){
+            window.startAgent(document.body);
+          });
+        </script>
       </head>
       <body></body>
       </html>
@@ -89,17 +95,16 @@ module.exports(testsFolder)=
     res.send "<html>
                 <body>
                   <div id='mocha'></div>
-                  <script src='/runner/log.js'></script>
-                  <script src='/runner/mocha.js'></script>
-                  <script src='/runner/mocha-reporter.js'></script>
+                  <script src='log.js'></script>
+                  <script src='mocha.js'></script>
+                  <script src='mocha-reporter.js'></script>
                   <script>mocha.setup({ui: 'bdd', reporter: Remote})</script>
-                  <script src='/runner/test?src=#(src)'></script>
+                  <script src='test?src=#(src)'></script>
                   <script>mocha.run();</script>
                 </body>
               </html>"
 
-/*
-//this is a test version trying to browserify mocha.. it doesn't work at the moment due to the way mocha is assembled
+/*//this is a test version trying to browserify mocha.. it doesn't work at the moment due to the way mocha is assembled
   app.get '/runner' @(req, res)
     src = decodeURIComponent(req.query.src)
     res.send "<html>
@@ -111,8 +116,8 @@ module.exports(testsFolder)=
 
   app.get '/runner/run.js' @(req, res)
     res.sendFile("#(distPath)/run.js")
+              */
 
-*/
   app.get '/runner/mocha.js' @(req, res)
     res.sendFile("#(path.resolve(__dirname, '../'))/node_modules/mocha/mocha.js")
 
@@ -123,12 +128,19 @@ module.exports(testsFolder)=
     res.sendFile("#(distPath)/log.js")
 
   app.get '/runner/test' @(req, res)
-    browserify = require 'browserify'
-    b = browserify({transform = pogoify, extensions = ['.pogo']})
-    globals = glob!("#(testsFolder)/global.+(js|pogo)", ^)
-    b.add(globals)
-    b.add("#(testsFolder)/#(decodeURIComponent(req.query.src))")
-    b.bundle().pipe(res)
+    try
+      browserify = require 'browserify'
+      b = browserify({transform = pogoify, extensions = ['.pogo']})
+      globals = glob!("#(testsFolder)/global.+(js|pogo)", ^)
+      b.add(globals)
+      b.add("#(testsFolder)/#(decodeURIComponent(req.query.src))")
+      errorHandler(e)=
+        console.log('bundle error', e)
+        res.send(500, e)
+
+      b.bundle().on('error', errorHandler).pipe(res)
+    catch(e)
+      res.send(500, e)
 
   app.get '/runner/deps' @(req, res)
     f = "#(testsFolder)/#(decodeURIComponent(req.query.src))"
@@ -142,4 +154,5 @@ module.exports(testsFolder)=
   {
     http   = httpServer
     socket = socketServer
+    app    = app
   }

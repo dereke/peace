@@ -19,13 +19,14 @@ task 'build'
       fullPaths       = true
       extensions      = ['.pogo']
       alias           = options.alias
+      standalone      = options.standalone
     }
     b.add(source)
     b.transform (pogoify)
     b.bundle().on('end', complete).pipe(fs.createWriteStream(__dirname+destination))
 
   bundleAll()=
-    bundle('./agent/agent', '/dist/agent.js')
+    bundle('./agent/agent', '/dist/agent.js', {standalone = 'startAgent'})
     bundle('./agent/mocha-reporter', '/dist/mocha-reporter.js')
     bundle('./agent/log', '/dist/log.js')
 

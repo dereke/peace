@@ -1,6 +1,6 @@
 log   = (require 'debug') 'peace:jobFinder'
 error = (require 'debug') 'peace:jobFinder:error'
-Mocha = require 'mocha'
+Mocha = require 'mocha/lib/mocha'
 glob  = require 'glob'
 path  = require 'path'
 pogo  = require 'pogo'
@@ -12,13 +12,17 @@ module.exports(testsPath)=
   files = glob!("#(testsPath)/**/*.+(js|pogo)", ^)
 
   for each @(file) in (files)
-    log "Add file #(file)"
-    mocha.files.push(file)
-    suite = mocha.suite
-    suite.emit('pre-require', global, file, mocha)
-    suite.emit('require', require!(file), file, mocha)
-    suite.emit('post-require', global, file, mocha)
-    log "Added file #(file)"
+    try
+      log "Add file #(file)"
+      mocha.files.push(file)
+      suite = mocha.suite
+      suite.emit('pre-require', global, file, mocha)
+      suite.emit('require', require(file), file, mocha)
+      suite.emit('post-require', global, file, mocha)
+      log "Added file #(file)"
+    catch(e)
+      log "Failed to add file #(file) - #(e)"
+      throw(e)
 
   log "All files loaded"
 

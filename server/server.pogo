@@ -119,7 +119,7 @@ module.exports(testsFolder)=
               */
 
   app.get '/runner/mocha.js' @(req, res)
-    res.sendFile("#(path.resolve(__dirname, '../'))/node_modules/mocha/mocha.js")
+    res.sendFile(path.join(path.dirname(require.resolve('mocha')), 'mocha.js'))
 
   app.get '/runner/mocha-reporter.js' @(req, res)
     res.sendFile("#(distPath)/mocha-reporter.js")

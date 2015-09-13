@@ -52,7 +52,7 @@
     "http-proxy": "^1.11.2",
     "httpism": "^1.4.1",
     "log-to-socket": "0.0.1",
-    "mocha": "^2.2.5",
+    "mocha": "^2.3.2",
     "module-deps": "^3.8.1",
     "plastiq": "^1.17.2",
     "pogo": "^0.10.0",

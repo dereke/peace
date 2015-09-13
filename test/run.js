@@ -4,6 +4,10 @@ var launch = require('../server/launch');
 var httpProxy = require('http-proxy');
 var proxy = httpProxy.createProxyServer({});
 
+proxy.on('error', function(e){
+  console.log('Proxy error', e);
+});
+
 var options = {
   port: 8765,
   configure: function(httpServer, socketServer, app){

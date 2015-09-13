@@ -1,6 +1,6 @@
 {
   "name": "peace",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "You can't have peace without good tests",
   "bin": {
     "peace": "./bin/peace.js"

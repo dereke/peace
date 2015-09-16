@@ -1,35 +1,42 @@
 log    = (require 'debug') 'peace:jobFinder:test'
-fsTree = require 'fs-tree'
-fs     = require 'fs-promise'
-tmp    = require 'tmp'
+censeo  = (require 'censeo/client')(8765)
 
 describe 'jobFinder'
   context 'multiple files with multipe tests in a test direcotry'
     testFolder = nil
     beforeEach
-      testFolder := tmp.dir!(^)
-      log "Setting up test folder #(testFolder)"
-      fsTree! (testFolder) {
-        test = {
-          'oneSpec.js' = "describe('one', function(){
-                            it('first', function(){})
-                            it('second', function(){})
-                          });"
-          'twoSpec.js' = "describe('two', function(){
-                            it('third', function(){throw new Error('oh crap')})
-                            it('fourth', function(){})
-                          });"
+      testFolder := censeo.run!()
+        fsTree = serverRequire 'fs-tree'
+        tmp    = serverRequire 'tmp'
+        testFolder := tmp.dir!(^)
+        console.log "Setting up test folder #(testFolder)"
+        fsTree! (testFolder) {
+          test = {
+            'oneSpec.js' = "describe('one', function(){
+                              it('first', function(){})
+                              it('second', function(){})
+                            });"
+            'twoSpec.js' = "describe('two', function(){
+                              it('third', function(){throw new Error('oh crap')})
+                              it('fourth', function(){})
+                            });"
+          }
         }
-      }
+
+        testFolder
 
     afterEach
       if (testFolder)
-        fs.remove!(testFolder)
-        log "Temp folder removed #(testFolder)"
+        censeo.run!(context = {testFolder = testFolder})
+          fs = serverRequire 'fs-promise'
+          fs.remove!(testFolder)
+          console.log "Temp folder removed #(testFolder)"
 
-    xit 'returns a list of all the tests that are ready to be run'
-      jobFinder = require '../server/jobFinder'
-      results = jobFinder!(testFolder)
+    it 'returns a list of all the tests that are ready to be run'
+      results = censeo.run!(context = {testFolder = testFolder})
+        jobFinder = serverRequire './server/jobFinder'
+        jobFinder!(testFolder)
+
       expect(results.length).to.equal(4)
       expect(results).to.containSubset [
         { name = 'one.first',  src = 'test/oneSpec.js' }
